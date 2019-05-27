@@ -145,6 +145,7 @@ public class ZoneAwareLoadBalancer<T extends Server> extends DynamicServerListLo
         
     @Override
     public Server chooseServer(Object key) {
+        // 服务端实例所在zone的个数大于1个才进行ZoneAwareLB。如果服务端的所有实例都在一个zone中，没必要使用zoneAwareLB。
         if (!enabled.getOrDefault() || getLoadBalancerStats().getAvailableZones().size() <= 1) {
             logger.debug("Zone aware logic disabled or there is only one zone");
             return super.chooseServer(key);
