@@ -92,6 +92,7 @@ public class DynamicServerListLoadBalancer<T extends Server> extends BaseLoadBal
         if (filter instanceof AbstractServerListFilter) {
             ((AbstractServerListFilter) filter).setLoadBalancerStats(getLoadBalancerStats());
         }
+        //开启每30s获取一次服务列表的任务
         restOfInit(clientConfig);
     }
 
@@ -139,9 +140,12 @@ public class DynamicServerListLoadBalancer<T extends Server> extends BaseLoadBal
         boolean primeConnection = this.isEnablePrimingConnections();
         // turn this off to avoid duplicated asynchronous priming done in BaseLoadBalancer.setServerList()
         this.setEnablePrimingConnections(false);
+
+        //开启周期性调用updateListOfServers的任务
         enableAndInitLearnNewServersFeature();
 
         updateListOfServers();
+
         if (primeConnection && this.getPrimeConnections() != null) {
             this.getPrimeConnections()
                     .primeConnections(getReachableServers());
@@ -237,10 +241,12 @@ public class DynamicServerListLoadBalancer<T extends Server> extends BaseLoadBal
     public void updateListOfServers() {
         List<T> servers = new ArrayList<T>();
         if (serverListImpl != null) {
+            //serverList: DiscoveryEnabledNIWSServerList
             servers = serverListImpl.getUpdatedListOfServers();
             LOGGER.debug("List of Servers for {} obtained from Discovery client: {}",
                     getIdentifier(), servers);
 
+            //过滤器: ZoneAffinityServerListFilter
             if (filter != null) {
                 servers = filter.getFilteredListOfServers(servers);
                 LOGGER.debug("Filtered List of Servers for {} obtained from Discovery client: {}",

@@ -114,10 +114,15 @@ public class ZoneAvoidanceRule extends PredicateBasedRule {
             String zone = zoneEntry.getKey();
             ZoneSnapshot zoneSnapshot = zoneEntry.getValue();
             int instanceCount = zoneSnapshot.getInstanceCount();
+
+            //1. zone中的实例数为0，清除该zone
             if (instanceCount == 0) {
                 availableZones.remove(zone);
                 limitedZoneAvailability = true;
             } else {
+                // 2.
+                //    如果该区域内不可达的实例数与实例总数的比值超过阈值，则移除该区域
+                //    如果平均负载小于0（该区域内的所有实例均不可达），则移除该区域
                 double loadPerServer = zoneSnapshot.getLoadPerServer();
                 if (((double) zoneSnapshot.getCircuitTrippedCount())
                         / instanceCount >= triggeringBlackoutPercentage
@@ -125,6 +130,7 @@ public class ZoneAvoidanceRule extends PredicateBasedRule {
                     availableZones.remove(zone);
                     limitedZoneAvailability = true;
                 } else {
+                    //定义糟糕zone：如果该区域内的实例平均负载最大（或者相差甚微），则记录为糟糕zone
                     if (Math.abs(loadPerServer - maxLoadPerServer) < 0.000001d) {
                         // they are the same considering double calculation
                         // round error
@@ -138,6 +144,7 @@ public class ZoneAvoidanceRule extends PredicateBasedRule {
             }
         }
 
+        // 最大负载为超过阈值并且不需要移除
         if (maxLoadPerServer < triggeringLoad && !limitedZoneAvailability) {
             // zone override is not needed here
             return availableZones;

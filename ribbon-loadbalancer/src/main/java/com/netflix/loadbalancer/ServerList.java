@@ -27,6 +27,7 @@ import java.util.List;
  */
 public interface ServerList<T extends Server> {
 
+    //获取初始化的服务实例清单
     public List<T> getInitialListOfServers();
     
     /**
@@ -34,6 +35,7 @@ public interface ServerList<T extends Server> {
      * (configurable) by the Loadbalancer's Ping cycle
      * 
      */
+    //获取更新的服务实例清单
     public List<T> getUpdatedListOfServers();   
 
 }

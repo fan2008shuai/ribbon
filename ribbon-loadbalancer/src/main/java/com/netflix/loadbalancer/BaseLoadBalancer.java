@@ -67,21 +67,28 @@ public class BaseLoadBalancer extends AbstractLoadBalancer implements
     private static final String DEFAULT_NAME = "default";
     private static final String PREFIX = "LoadBalancer_";
 
+    //负载均衡器进行实例选择的任务是委托给了IRule实例中的choose函数来实现
     protected IRule rule = DEFAULT_RULE;
 
+    //检查服务实例是否正常的执行策略
     protected IPingStrategy pingStrategy = DEFAULT_PING_STRATEGY;
 
+    //检查服务实例是否正常
     protected IPing ping = null;
 
+    //All known servers, both reachable and unreachable.
     @Monitor(name = PREFIX + "AllServerList", type = DataSourceType.INFORMATIONAL)
     protected volatile List<Server> allServerList = Collections
             .synchronizedList(new ArrayList<Server>());
+
+    //Only the servers that are up and reachable.
     @Monitor(name = PREFIX + "UpServerList", type = DataSourceType.INFORMATIONAL)
     protected volatile List<Server> upServerList = Collections
             .synchronizedList(new ArrayList<Server>());
 
     protected ReadWriteLock allServerLock = new ReentrantReadWriteLock();
     protected ReadWriteLock upServerLock = new ReentrantReadWriteLock();
+
 
     protected String name = DEFAULT_NAME;
 
@@ -92,7 +99,9 @@ public class BaseLoadBalancer extends AbstractLoadBalancer implements
 
     protected AtomicBoolean pingInProgress = new AtomicBoolean(false);
 
+    //存储负载均衡器各服务实例属性和统计信息
     protected LoadBalancerStats lbStats;
+
 
     private volatile Counter counter = Monitors.newCounter("LoadBalancer_ChooseServer");
 
@@ -119,7 +128,9 @@ public class BaseLoadBalancer extends AbstractLoadBalancer implements
     public BaseLoadBalancer() {
         this.name = DEFAULT_NAME;
         this.ping = null;
+        //rule跟该balancer做关联
         setRule(DEFAULT_RULE);
+        //开启每10s ping所有服务列表的周期性任务（timer实现），更新upServerList
         setupPingTask();
         lbStats = new LoadBalancerStats(DEFAULT_NAME);
     }
@@ -547,8 +558,10 @@ public class BaseLoadBalancer extends AbstractLoadBalancer implements
                 for (Server s : allServerList) {
                     s.setAlive(true);
                 }
+                //TODO 不需要加锁?
                 upServerList = allServerList;
             } else if (listChanged) {
+                //会更新upServerList
                 forceQuickPing();
             }
         } finally {

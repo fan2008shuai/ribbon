@@ -43,6 +43,8 @@ import javax.inject.Provider;
  * @author stonse
  *
  */
+
+//NIWS（Netflix Internal Web Service）
 public class DiscoveryEnabledNIWSServerList extends AbstractServerList<DiscoveryEnabledServer>{
 
     private static final Logger logger = LoggerFactory.getLogger(DiscoveryEnabledNIWSServerList.class);

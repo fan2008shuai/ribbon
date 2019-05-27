@@ -53,6 +53,16 @@ import com.netflix.servo.monitor.Monitors;
  * @author stonse
  * 
  */
+
+/**
+ *
+ * 记录各个服务实例的状态信息（v1）
+ *
+ * 记录各个zone的状态信息（v2）
+ *
+ * 作为流量调度的基准
+ *
+ */
 public class LoadBalancerStats implements IClientConfigAware {
     
     private static final String PREFIX = "LBStats_";
@@ -296,8 +306,10 @@ public class LoadBalancerStats implements IClientConfigAware {
             if (stat.isCircuitBreakerTripped(currentTime)) {
                 circuitBreakerTrippedCount++;
             } else {
+                //处于非熔断状态的server的总请求量（请求量有一个活动窗口，默认是10分钟）
                 activeConnectionsCountOnAvailableServer += stat.getActiveRequestsCount(currentTime);
             }
+            //所有server的总请求量
             activeConnectionsCount += stat.getActiveRequestsCount(currentTime);
         }
         if (circuitBreakerTrippedCount == instanceCount) {
@@ -306,6 +318,7 @@ public class LoadBalancerStats implements IClientConfigAware {
                 loadPerServer = -1;
             }
         } else {
+            //处于非熔断状态服务的平均负载   该数据不会超过1.0 ???
             loadPerServer = ((double) activeConnectionsCountOnAvailableServer) / (instanceCount - circuitBreakerTrippedCount);
         }
         return new ZoneSnapshot(instanceCount, circuitBreakerTrippedCount, activeConnectionsCount, loadPerServer);

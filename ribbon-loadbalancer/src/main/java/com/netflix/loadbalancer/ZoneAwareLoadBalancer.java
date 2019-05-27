@@ -86,6 +86,9 @@ public class ZoneAwareLoadBalancer<T extends Server> extends DynamicServerListLo
         super(niwsClientConfig);
     }
 
+
+    //未重写setServersList
+
     @Override
     protected void setServerListForZones(Map<String, List<Server>> zoneServersMap) {
         super.setServerListForZones(zoneServersMap);
@@ -99,6 +102,9 @@ public class ZoneAwareLoadBalancer<T extends Server> extends DynamicServerListLo
         // check if there is any zone that no longer has a server
         // and set the list to empty so that the zone related metrics does not
         // contain stale data
+        /**
+         * 对Zone区域中实例清单的检查，看看是否有Zone区域下已经没有实例了，是的话就将balancers中对应Zone区域的实例列表清空
+         */
         for (Map.Entry<String, BaseLoadBalancer> existingLBEntry: balancers.entrySet()) {
             if (!zoneServersMap.keySet().contains(existingLBEntry.getKey())) {
                 existingLBEntry.getValue().setServersList(Collections.emptyList());

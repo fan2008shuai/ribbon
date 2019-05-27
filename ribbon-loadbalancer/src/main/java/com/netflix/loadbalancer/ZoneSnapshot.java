@@ -23,9 +23,13 @@ package com.netflix.loadbalancer;
  *
  */
 public class ZoneSnapshot {
+    //实例数量
     final int instanceCount;
+    //实例平均负载
     final double loadPerServer;
+    //断路器断开数（实例不可达的数量）
     final int circuitTrippedCount;
+    //活动请求数  concurrent connection count
     final int activeRequestsCount;
     
     public ZoneSnapshot() {

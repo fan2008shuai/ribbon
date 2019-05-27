@@ -69,7 +69,8 @@ public class ServerStats {
     
     @VisibleForTesting
     AtomicInteger successiveConnectionFailureCount = new AtomicInteger(0);
-    
+
+    //concurrent connection count
     @VisibleForTesting
     AtomicInteger activeRequestsCount = new AtomicInteger(0);
 
@@ -241,11 +242,13 @@ public class ServerStats {
         return getActiveRequestsCount(System.currentTimeMillis());
     }
 
+    //concurrent connection count
     public int getActiveRequestsCount(long currentTime) {
         int count = activeRequestsCount.get();
         if (count == 0) {
             return 0;
         } else if (currentTime - lastActiveRequestsCountChangeTimestamp > activeRequestsCountTimeout.get() * 1000 || count < 0) {
+            //请求数量阈值??
             activeRequestsCount.set(0);
             return 0;            
         } else {
@@ -271,7 +274,12 @@ public class ServerStats {
     public boolean isCircuitBreakerTripped() {
         return isCircuitBreakerTripped(System.currentTimeMillis());
     }
-    
+
+    /**
+     * 判断该server是否在熔断状态。
+     * @param currentTime
+     * @return
+     */
     public boolean isCircuitBreakerTripped(long currentTime) {
         long circuitBreakerTimeout = getCircuitBreakerTimeout();
         if (circuitBreakerTimeout <= 0) {
@@ -288,7 +296,12 @@ public class ServerStats {
         }
         return lastConnectionFailedTimestamp + blackOutPeriod;
     }
-    
+
+    /**
+     * 计算处于熔断状态的持续时间（如果处于非熔断状态，则返回0）
+     * 该时间根据连接建立失败的次数与连接失败阈值的差值作为依据。
+     * @return
+     */
     private long getCircuitBreakerBlackoutPeriod() {
         int failureCount = successiveConnectionFailureCount.get();
         int threshold = connectionFailureThreshold.get();

@@ -83,6 +83,19 @@ public class ServerListSubsetFilter<T extends Server> extends ZoneAffinityServer
      * number of the subset unchanged. 
      * 
      */
+
+    /**
+     * 该方法返回的实例列表的数量尽可能是给定的20个。
+     * 如果上次提供的实例列表的服务未在候选列表（本次获取的候选服务列表）中，则直接删除。
+     * 如果上次提供的实例列表的服务在候选列表中，看该服务是否"健康"，不健康删除
+     *
+     * 删除上面不健康的实例之后，还需要进行"末位淘汰"（按照failures count和concurrent connection count降序排列，删除前面的几个）
+     *
+     * 如果"末位淘汰"之后，剩余的实例不够20个，则从候选服务列表中补充
+     *
+     * @param servers
+     * @return
+     */
     @Override
     public List<T> getFilteredListOfServers(List<T> servers) {
         List<T> zoneAffinityFiltered = super.getFilteredListOfServers(servers);
@@ -120,7 +133,8 @@ public class ServerListSubsetFilter<T extends Server> extends ZoneAffinityServer
         }
 
         if (numToForceEliminate > 0) {
-            List<T> sortedSubSet = Lists.newArrayList(newSubSet);           
+            List<T> sortedSubSet = Lists.newArrayList(newSubSet);
+            //按照failures count和concurrent connection count降序排列
             Collections.sort(sortedSubSet, this);
             List<T> forceEliminated = sortedSubSet.subList(0, numToForceEliminate);
             newSubSet.removeAll(forceEliminated);
@@ -175,6 +189,7 @@ public class ServerListSubsetFilter<T extends Server> extends ZoneAffinityServer
      * unhealthy servers before healthy servers. The servers are first sorted by
      * failures count, and then concurrent connection count.
      */
+    //按照failures count和concurrent connection count降序排列
     @Override
     public int compare(T server1, T server2) {
         LoadBalancerStats lbStats = getLoadBalancerStats();
