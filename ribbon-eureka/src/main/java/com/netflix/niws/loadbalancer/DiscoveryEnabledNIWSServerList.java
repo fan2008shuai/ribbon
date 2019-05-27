@@ -19,11 +19,12 @@ package com.netflix.niws.loadbalancer;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import com.netflix.appinfo.InstanceInfo;
 import com.netflix.appinfo.InstanceInfo.InstanceStatus;
+import com.netflix.client.config.ClientConfigFactory;
 import com.netflix.client.config.CommonClientConfigKey;
-import com.netflix.client.config.DefaultClientConfigImpl;
 import com.netflix.client.config.IClientConfig;
 import com.netflix.client.config.IClientConfigKey.Keys;
 import com.netflix.config.ConfigurationManager;
@@ -58,7 +59,7 @@ public class DiscoveryEnabledNIWSServerList extends AbstractServerList<Discovery
     String datacenter;
     String targetRegion;
 
-    int overridePort = DefaultClientConfigImpl.DEFAULT_PORT;
+    int overridePort = CommonClientConfigKey.Port.defaultValue();
     boolean shouldUseOverridePort = false;
     boolean shouldUseIpAddr = false;
 
@@ -110,34 +111,29 @@ public class DiscoveryEnabledNIWSServerList extends AbstractServerList<Discovery
                 ConfigurationManager.getConfigInstance().getBoolean("DiscoveryEnabledNIWSServerList.failFastOnNullVip", true)) {
             throw new NullPointerException("VIP address for client " + clientName + " is null");
         }
-        isSecure = Boolean.parseBoolean(""+clientConfig.getProperty(CommonClientConfigKey.IsSecure, "false"));
-        prioritizeVipAddressBasedServers = Boolean.parseBoolean(""+clientConfig.getProperty(CommonClientConfigKey.PrioritizeVipAddressBasedServers, prioritizeVipAddressBasedServers));
+        isSecure = clientConfig.get(CommonClientConfigKey.IsSecure, false);
+        prioritizeVipAddressBasedServers = clientConfig.get(CommonClientConfigKey.PrioritizeVipAddressBasedServers, prioritizeVipAddressBasedServers);
         datacenter = ConfigurationManager.getDeploymentContext().getDeploymentDatacenter();
-        targetRegion = (String) clientConfig.getProperty(CommonClientConfigKey.TargetRegion);
+        targetRegion = clientConfig.get(CommonClientConfigKey.TargetRegion);
 
-        shouldUseIpAddr = clientConfig.getPropertyAsBoolean(CommonClientConfigKey.UseIPAddrForServer, DefaultClientConfigImpl.DEFAULT_USEIPADDRESS_FOR_SERVER);
+        shouldUseIpAddr = clientConfig.getOrDefault(CommonClientConfigKey.UseIPAddrForServer);
 
         // override client configuration and use client-defined port
-        if(clientConfig.getPropertyAsBoolean(CommonClientConfigKey.ForceClientPortConfiguration, false)){
-
-            if(isSecure){
-
-                if(clientConfig.containsProperty(CommonClientConfigKey.SecurePort)){
-
-                    overridePort = clientConfig.getPropertyAsInteger(CommonClientConfigKey.SecurePort, DefaultClientConfigImpl.DEFAULT_PORT);
+        if (clientConfig.get(CommonClientConfigKey.ForceClientPortConfiguration, false)){
+            if (isSecure) {
+                final Integer port = clientConfig.get(CommonClientConfigKey.SecurePort);
+                if (port != null) {
+                    overridePort = port;
                     shouldUseOverridePort = true;
-
-                }else{
+                } else {
                     logger.warn(clientName + " set to force client port but no secure port is set, so ignoring");
                 }
-            }else{
-
-                if(clientConfig.containsProperty(CommonClientConfigKey.Port)){
-
-                    overridePort = clientConfig.getPropertyAsInteger(CommonClientConfigKey.Port, DefaultClientConfigImpl.DEFAULT_PORT);
+            } else {
+                final Integer port = clientConfig.get(CommonClientConfigKey.Port);
+                if (port != null) {
+                    overridePort = port;
                     shouldUseOverridePort = true;
-
-                }else{
+                } else{
                     logger.warn(clientName + " set to force client port but no port is set, so ignoring");
                 }
             }
@@ -230,7 +226,7 @@ public class DiscoveryEnabledNIWSServerList extends AbstractServerList<Discovery
 
 
     private static IClientConfig createClientConfig(String vipAddresses) {
-        IClientConfig clientConfig = DefaultClientConfigImpl.getClientConfigWithDefaultValues();
+        IClientConfig clientConfig = ClientConfigFactory.DEFAULT.newConfig();
         clientConfig.set(Keys.DeploymentContextBasedVipAddresses, vipAddresses);
         return clientConfig;
     }
