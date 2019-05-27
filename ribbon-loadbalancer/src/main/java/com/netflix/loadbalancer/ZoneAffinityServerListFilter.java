@@ -68,6 +68,8 @@ public class ZoneAffinityServerListFilter<T extends Server> extends
     private Property<Double> blackOutServerPercentageThreshold;
     //可用实例数（实例数量 - 断路器断开数）
     private Property<Integer> availableServersThreshold;
+
+    // 跨zone访问的次数
     private Counter overrideCounter;
 
     //ZoneAffinity区域感知
@@ -91,7 +93,9 @@ public class ZoneAffinityServerListFilter<T extends Server> extends
 
     @Override
     public void initWithNiwsConfig(IClientConfig niwsClientConfig) {
+        // 默认false
         zoneAffinity = niwsClientConfig.getOrDefault(CommonClientConfigKey.EnableZoneAffinity);
+        // 默认false
         zoneExclusive = niwsClientConfig.getOrDefault(CommonClientConfigKey.EnableZoneExclusivity);
         zone = niwsClientConfig.getGlobalProperty(ZONE).getOrDefault();
         zoneAffinityPredicate = new ZoneAffinityPredicate(zone);
@@ -124,9 +128,9 @@ public class ZoneAffinityServerListFilter<T extends Server> extends
             int instanceCount = snapshot.getInstanceCount();            
             int circuitBreakerTrippedCount = snapshot.getCircuitTrippedCount();
             /**
-             * 获取这些过滤后的同区域实例的基础指标（包含了：实例数量、断路器断开数、活动请求数、实例平均负载等），
+             * 获取这些过滤后的同区域实例的基础指标（包含了：实例数量、断路器断开数、活动请求数(活跃连接数)、实例平均负载等），
              * 根据一系列的算法求出下面的几个评价值并与设置的阈值对比（下面的为默认值），若有一个条件符合，
-             * 就不启用“区域感知”过滤的服务实例清单。
+             * 就不启用“区域感知”过滤的服务实例清单，转为在所有zone中选择。
              * 这一算法实现对于集群出现区域故障时，依然可以依靠其他区域的实例进行正常服务提供了完善的高可用保障
              *
              * blackOutServerPercentage：故障实例百分比（断路器断开数 / 实例数量） >= 0.8
@@ -140,7 +144,8 @@ public class ZoneAffinityServerListFilter<T extends Server> extends
                     || loadPerServer >= activeReqeustsPerServerThreshold.getOrDefault()
                     || (instanceCount - circuitBreakerTrippedCount) < availableServersThreshold.getOrDefault()) {
                 logger.debug("zoneAffinity is overriden. blackOutServerPercentage: {}, activeReqeustsPerServer: {}, availableServers: {}",
-                        new Object[] {(double) circuitBreakerTrippedCount / instanceCount,  loadPerServer, instanceCount - circuitBreakerTrippedCount});
+
+                new Object[] {(double) circuitBreakerTrippedCount / instanceCount, loadPerServer, instanceCount - circuitBreakerTrippedCount});
                 return false;
             } else {
                 return true;

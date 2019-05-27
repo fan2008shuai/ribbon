@@ -180,7 +180,9 @@ public class BaseLoadBalancer extends AbstractLoadBalancer implements
     void initWithConfig(IClientConfig clientConfig, IRule rule, IPing ping, LoadBalancerStats stats) {
         this.config = clientConfig;
         this.name = clientConfig.getClientName();
+        // ping间隔
         int pingIntervalTime = clientConfig.get(CommonClientConfigKey.NFLoadBalancerPingInterval, 30);
+        // 最大全部ping时间，没有使用 (Maximum time allowed for the ping cycle)
         int maxTotalPingTime = clientConfig.get(CommonClientConfigKey.NFLoadBalancerMaxTotalPingTime, 2);
 
         setPingInterval(pingIntervalTime);
@@ -193,6 +195,7 @@ public class BaseLoadBalancer extends AbstractLoadBalancer implements
         setPing(ping);
 
         setLoadBalancerStats(stats);
+        // setRule(rule); 已经set过了
         rule.setLoadBalancer(this);
         if (ping instanceof AbstractLoadBalancerPing) {
             ((AbstractLoadBalancerPing) ping).setLoadBalancer(this);

@@ -90,16 +90,19 @@ public class LoadBalancerStats implements IClientConfigAware {
             "niws.loadbalancer.default.circuitTripMaxTimeoutSeconds", 30) {};
 
     private String name;
-    
+
+    // key: zone   value: 该zone内的ZoneStats
     volatile Map<String, ZoneStats> zoneStatsMap = new ConcurrentHashMap<>();
+    // key: zone   value: 该zone内的实例列表
     volatile Map<String, List<? extends Server>> upServerListZoneMap = new ConcurrentHashMap<>();
-    
+
+    // 连接失败阈值， 默认值3
     private UnboxedIntProperty connectionFailureThreshold = new UnboxedIntProperty(CONNECTION_FAILURE_COUNT_THRESHOLD.defaultValue());
-        
+    // 熔断器触发超时时间，默认10s
     private UnboxedIntProperty circuitTrippedTimeoutFactor = new UnboxedIntProperty(CIRCUIT_TRIP_TIMEOUT_FACTOR_SECONDS.defaultValue());
-
+    // 熔断器触发最大超时时间，默认30s
     private UnboxedIntProperty maxCircuitTrippedTimeout = new UnboxedIntProperty(CIRCUIT_TRIP_MAX_TIMEOUT_SECONDS.defaultValue());
-
+    // 活跃请求数，有效窗口时间，默认10*60s
     private UnboxedIntProperty activeRequestsCountTimeout = new UnboxedIntProperty(ACTIVE_REQUESTS_COUNT_TIMEOUT.defaultValue());
 
     private final LoadingCache<Server, ServerStats> serverStatsCache = CacheBuilder.newBuilder()
@@ -330,10 +333,10 @@ public class LoadBalancerStats implements IClientConfigAware {
             if (stat.isCircuitBreakerTripped(currentTime)) {
                 circuitBreakerTrippedCount++;
             } else {
-                //处于非熔断状态的server的总请求量（请求量有一个活动窗口，默认是10分钟）
+                //处于非熔断状态的server的总请求量(连接数)（请求量有一个活动窗口，默认是10分钟）
                 activeConnectionsCountOnAvailableServer += stat.getActiveRequestsCount(currentTime);
             }
-            //所有server的总请求量
+            //所有server的总请求量（连接数）
             activeConnectionsCount += stat.getActiveRequestsCount(currentTime);
         }
         if (circuitBreakerTrippedCount == instanceCount) {
@@ -342,7 +345,7 @@ public class LoadBalancerStats implements IClientConfigAware {
                 loadPerServer = -1;
             }
         } else {
-            //处于非熔断状态服务的平均负载   该数据不会超过1.0 ???
+            //处于非熔断状态服务的平均负载
             loadPerServer = ((double) activeConnectionsCountOnAvailableServer) / (instanceCount - circuitBreakerTrippedCount);
         }
         return new ZoneSnapshot(instanceCount, circuitBreakerTrippedCount, activeConnectionsCount, loadPerServer);

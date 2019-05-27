@@ -244,7 +244,7 @@ public class ServerStats {
         if (count == 0) {
             return 0;
         } else if (currentTime - lastActiveRequestsCountChangeTimestamp > activeRequestsCountTimeout.get() * 1000 || count < 0) {
-            //请求数量阈值??
+            // 超过了请求数的统计窗口，则对请求数清0
             activeRequestsCount.set(0);
             return 0;            
         } else {
@@ -294,6 +294,12 @@ public class ServerStats {
     /**
      * 计算处于熔断状态的持续时间（如果处于非熔断状态，则返回0）
      * 该时间根据连接建立失败的次数与连接失败阈值的差值作为依据。
+     *
+     *
+     * 熔断故障持续时间=2^n * 10s，其中n为连续连接失败的次数减去连接失败的阈值作为指数（n最大取16），连接失败的阈值默认为3
+     * 10s是熔断触发超时时间因子circuitTrippedTimeoutFactor，默认是10s
+     *
+     *
      * @return
      */
     private long getCircuitBreakerBlackoutPeriod() {

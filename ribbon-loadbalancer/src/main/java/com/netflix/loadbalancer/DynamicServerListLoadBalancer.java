@@ -143,6 +143,7 @@ public class DynamicServerListLoadBalancer<T extends Server> extends BaseLoadBal
         //开启周期性调用updateListOfServers的任务
         enableAndInitLearnNewServersFeature();
 
+        //更新各个zone的实例列表
         updateListOfServers();
 
         if (primeConnection && this.getPrimeConnections() != null) {
@@ -155,6 +156,7 @@ public class DynamicServerListLoadBalancer<T extends Server> extends BaseLoadBal
     
     
     @Override
+    // 对server列表根据zone进行聚合
     public void setServersList(List lsrv) {
         super.setServersList(lsrv);
         List<T> serverList = (List<T>) lsrv;
@@ -177,6 +179,7 @@ public class DynamicServerListLoadBalancer<T extends Server> extends BaseLoadBal
         setServerListForZones(serversInZones);
     }
 
+    // 更新LoadBalancerStats中的zone与实例的对应关系 以及 各个zone的统计数据
     protected void setServerListForZones(
             Map<String, List<Server>> zoneServersMap) {
         LOGGER.debug("Setting server list for zones: {}", zoneServersMap);
@@ -237,6 +240,7 @@ public class DynamicServerListLoadBalancer<T extends Server> extends BaseLoadBal
     }
 
     @VisibleForTesting
+    // 获取服务的实例列表、按照策略过滤、根据zone对实例进行聚合
     public void updateListOfServers() {
         List<T> servers = new ArrayList<T>();
         if (serverListImpl != null) {
