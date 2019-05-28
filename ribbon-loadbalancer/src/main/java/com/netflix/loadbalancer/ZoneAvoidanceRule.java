@@ -68,6 +68,7 @@ public class ZoneAvoidanceRule extends PredicateBasedRule {
         return map;
     }
 
+    // 根据实例个数随机选择一个zone
     static String randomChooseZone(Map<String, ZoneSnapshot> snapshot,
             Set<String> chooseFrom) {
         if (chooseFrom == null || chooseFrom.size() == 0) {

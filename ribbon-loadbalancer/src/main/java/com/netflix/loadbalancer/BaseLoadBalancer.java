@@ -552,7 +552,7 @@ public class BaseLoadBalancer extends AbstractLoadBalancer implements
                 for (Server s : allServerList) {
                     s.setAlive(true);
                 }
-                //TODO 不需要加锁?
+
                 upServerList = allServerList;
             } else if (listChanged) {
                 //会更新upServerList

@@ -25,11 +25,11 @@ package com.netflix.loadbalancer;
 public class ZoneSnapshot {
     //实例数量
     final int instanceCount;
-    //实例平均负载（所有实例请求数除以当前可用的实例数，即当前可用实例数的平均处理请求数）
+    //实例平均负载（所有实例请求数(连接数？)除以当前可用的实例数，即当前可用实例数的平均处理请求数（连接数））
     final double loadPerServer;
     //断路器断开数（实例不可达的数量）
     final int circuitTrippedCount;
-    //活动请求数（默认10分钟内，所有实例的请求数）
+    //活跃请求数/连接数（默认10分钟内，所有实例的请求数/连接数）
     final int activeRequestsCount;
     
     public ZoneSnapshot() {

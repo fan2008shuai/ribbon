@@ -58,6 +58,7 @@ public class RandomRule extends AbstractLoadBalancerRule {
             }
 
             int index = chooseRandomInt(serverCount);
+            // TODO 有可能抛出IndexOutOfBoundsException，因为serverCount很有可能大于upList中实例的个数
             server = upList.get(index);
 
             if (server == null) {

@@ -18,7 +18,7 @@ public class TestIterable {
 
         List<String> source = new LinkedList<>();
         source.add("fan");
-        source.add("moa");
+        source.add("foa");
         source.add("momo");
         List<String> filteredServers = Lists.newArrayList(Iterables.filter(
                 source, new Predicate<String>() {

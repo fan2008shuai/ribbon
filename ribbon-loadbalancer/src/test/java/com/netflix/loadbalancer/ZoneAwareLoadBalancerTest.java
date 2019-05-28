@@ -106,7 +106,10 @@ public class ZoneAwareLoadBalancerTest {
 
         assertEquals(2, loadBalancerStats.getActiveRequestsCount("us-east-1c"));
         assertEquals(0.5d, loadBalancerStats.getActiveRequestsPerServer("us-east-1c"), 0.0001d);
+        // c的loadPerServer太高，被驱逐
         testChooseServer(balancer, "us-east-1a", "us-east-1b");
+
+        // a zone的1号实例被熔断
         for (int i = 0; i < 3; i++) {
             loadBalancerStats.incrementSuccessiveConnectionFailureCount(createServer(1, "a"));
         }
@@ -121,12 +124,14 @@ public class ZoneAwareLoadBalancerTest {
         
         // make a load on zone a
         loadBalancerStats.incrementActiveRequestsCount(createServer(2, "a"));
+        // a zone的1号实例被熔断
         assertEquals(1d/3, loadBalancerStats.getActiveRequestsPerServer("us-east-1a"), 0.0001);
         
         // zone c will be dropped as the worst zone
         testChooseServer(balancer, "us-east-1b", "us-east-1a");
                 
         Thread.sleep(15000);
+        //  sleep 15s之后，a zone的1号实例从熔断状态恢复
         assertEquals(0, loadBalancerStats.getCircuitBreakerTrippedCount("us-east-1a"));
         assertEquals(3, loadBalancerStats.getSingleServerStat(createServer(1, "a")).getSuccessiveConnectionFailureCount());
         assertEquals(0, loadBalancerStats.getActiveRequestsCount("us-east-1c"));

@@ -26,7 +26,13 @@ NIWS（Netflix Internal Web Service）
 成员变量IPingStrategy
 
 # IRule
+Ribbon提供了各种负载均衡的规则，包括如下几个：
 
+- RandomRule：根据所有的服务列表总数随机获取一个索引index，然后从所有可用服务列表中根据该index获取server。
+
+- RoundRobinRule：轮询获取server
+
+- ZoneAvoidanceRule：从所有zone中剔除worst区域，获得可用的zone列表，再从可用的zone列表中，根据各个zone的实例个数随机选择一个zone（基于权重的随机）。
 
 # PrimeConnections
 建立连接，可以根据实际情况实现IPrimeConnection接口。建立连接的过程是异步的。
